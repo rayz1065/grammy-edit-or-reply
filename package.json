@@ -1,0 +1,50 @@
+{
+  "name": "grammy-edit-or-reply",
+  "description": "Exports utilities for grammy to edit a message or reply to a message based on the context",
+  "version": "1.24.0",
+  "author": "rayz1065",
+  "license": "MIT",
+  "engines": {
+    "node": "^12.20.0 || >=14.0.0"
+  },
+  "homepage": "https://github.com/rayz1065/grammy-edit-or-reply",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rayz1065/grammy-edit-or-reply.git"
+  },
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "build": "tsc --project tsconfig.build.json",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "grammy": "^1.24.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
+    "@typescript-eslint/parser": "^7.11.0",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.3.0",
+    "ts-jest": "^29.1.4",
+    "typescript": "^5.4.5"
+  },
+  "files": [
+    "out/"
+  ],
+  "main": "./out/index.js",
+  "types": "./out/index.d.ts",
+  "exports": {
+    ".": "./out/index.js"
+  },
+  "keywords": [
+    "grammY",
+    "Telegram bot framework",
+    "plugin"
+  ]
+}
