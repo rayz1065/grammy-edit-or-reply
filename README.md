@@ -49,6 +49,8 @@ bot.callbackQuery(/count_(\d+)/, async (ctx) => {
 });
 ```
 
+> 👇 See [below](#complete-example) for a complete example using different types of media working across commands, callback queries, and inline queries, including the generation of `InlineQueryResult`s.
+
 When editing from a text message to one containing media, the previous message will be deleted and the new one with the media will be sent.
 The same behavior also happens when replacing a message containing media with one without media.
 If an error occurs, no message is deleted.
@@ -63,9 +65,16 @@ npm install grammy-edit-or-reply
 yarn add grammy-edit-or-reply
 ```
 
+> ⚙️ Instead of using semver, grammy-edit-or-reply uses the same major and minor as the latest supported grammy version.
+
 You can then add the middleware as follows:
 
 ```typescript
+// extend your context
+type MyContext = Context & EditOrReplyFlavor;
+const bot = new Bot<MyContext>('12345:ABCDE');
+
+// register the middleware
 bot.use(editOrReplyMiddleware());
 ```
 
@@ -101,15 +110,17 @@ function getMenuMessage(ctx: MyContext) {
     // explicitly set parse_mode to undefined if you're using the parseMode plugin,
     // otherwise entities will not work!
     parse_mode: undefined,
+    // using `satisfies` helps keep the type narrow
   } satisfies MessageData;
 }
 ```
 
-This allows you to describe messages in a method-agnostic way, `editOrReply` will then be tasked to pick the right one out of the **11** available (see `EditOrReplyResult` for details) and correctly structure the data to call it.
+This allows you to describe messages in a method-agnostic way, `editOrReply` will then be tasked to pick the right one out of the **11** available and correctly structure the data to call it.
 
 ## Return type
 
-The return type depends on the method used, most of them will return the message, except for inline methods that return `true`, a simple type check (or assertion if you're sure no inline method will be used) will allow you to access the message data.
+The return type depends on the method used, most of them will return the message, except for inline methods that return `true`.
+A simple type check (or assertion if you're sure no inline method will be used) will allow you to access the message's data.
 
 ```typescript
 bot.command('start', async (ctx) => {
@@ -118,6 +129,26 @@ bot.command('start', async (ctx) => {
   assert(typeof result !== 'boolean');
   console.log(result.message_id);
 });
+```
+
+## Generating Inline Query Results
+
+This plugin can also help you generate inline query results out of your messages through the `makeInlineResult` function.
+
+Caveats:
+
+- `InputFile`s are not supported in `sendInlineQuery`, the type of media must therefore be narrowed down in case it's too broad using `messageDataHasNoInputFile`.
+- Permitting URLs as media would require adding a lot of extra metadata (like thumbnails and mime types), to keep message definition simple **only file ids are allowed**;
+- sending an audio by file id can [run into issues with metadata](https://github.com/telegraf/telegraf/issues/884#issuecomment-582278542), even though the file is already stored on Telegram's server. Audios are therefore sent as documents, changing the appearance of the inline result, but not that of the sent message.
+
+```typescript
+const messageData = getMenuMessage();
+assert(messageDataHasNoInputFile(messageData)); // if necessary
+const result = {
+  ...makeInlineResult(getMenuMessage()),
+  id: `0`,
+  title: `Main menu`,
+};
 ```
 
 ## How it works
@@ -133,6 +164,78 @@ Under the hood `editOrReply` uses a function called `getMessageInfo` to determin
 `OldMessageInfoChatMessage` and `OldMessageInfoInline` further specify whether the previous message has a media by using `getMessageMediaInfo` on the message, if the message is not available (inline mode or inaccessible message) a guess will be made.
 Call `ctx.getMessageInfo` directly if you want more control over the guess and pass the result to `ctx.editOrReply`.
 
+## Complete Example
+
+```typescript
+const myMedias: MessageDataMedia['media'][] = [
+  // your medias here
+];
+
+const prettyMediaTypes = {
+  photo: '🖼️',
+  animation: '🎞️',
+  video: '📹',
+  document: '📄',
+  audio: '🎵',
+};
+
+function makeMediaGallery(selectedIdx?: number) {
+  const media =
+    selectedIdx !== undefined ? myMedias.at(selectedIdx) : undefined;
+
+  const keyboard: InlineKeyboardButton[][] = [
+    myMedias.map((x, i) => ({
+      text: prettyMediaTypes[x.type],
+      callback_data: `media_${i}`,
+    })),
+  ];
+
+  if (media) {
+    return {
+      text: `Media id: <code>${media.media}</code>`,
+      parse_mode: 'HTML',
+      media,
+      keyboard,
+    } satisfies MessageDataMedia;
+  }
+
+  return {
+    text: 'Pick the media from the options',
+    keyboard,
+  } satisfies MessageData;
+}
+
+// generate inlineQueryResults based on the message data
+bot.inlineQuery('gallery', async (ctx) => {
+  const results = myMedias.map((x, i) => ({
+    ...makeInlineResult(makeMediaGallery(i)),
+    id: `media-${i}`,
+    title: `Send ${x.type} ${prettyMediaTypes[x.type]}`,
+  }));
+  await ctx.answerInlineQuery(results);
+});
+
+bot.command('gallery', async (ctx) => {
+  await ctx.editOrReply(makeMediaGallery());
+});
+
+bot.callbackQuery(/media_(\d+)/, async (ctx) => {
+  const selectedIdx = Number(ctx.match[1]);
+  await ctx.editOrReply(makeMediaGallery(selectedIdx));
+});
+
+// use this to get the file IDs
+bot.use(async (ctx, next) => {
+  if (ctx.message) {
+    const res = getMessageMediaInfo(ctx.message);
+    if (res) {
+      console.log('media info', res);
+    }
+  }
+  await next();
+});
+```
+
 ## License
 
-grammy-edit-or-reply is available under the MIT License.
+Grammy Edit or Reply is available under the **MIT License**.

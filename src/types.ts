@@ -11,6 +11,11 @@ import {
   PhotoSize,
   ReplyParameters,
   Video,
+  InlineQueryResultArticle,
+  InlineQueryResultCachedDocument,
+  InlineQueryResultCachedPhoto,
+  InlineQueryResultCachedVideo,
+  InlineQueryResultCachedGif,
 } from 'grammy/types';
 
 export type Other = {
@@ -97,6 +102,21 @@ export function messageDataHasMedia(
   return 'media' in messageData && messageData.media !== undefined;
 }
 
+/**
+ * Checks that the message data has no input file.
+ * This is required for `makeInlineResult`.
+ */
+export function messageDataHasNoInputFile(
+  messageData: MessageData
+): messageData is
+  | MessageDataText
+  | (MessageDataMedia & { media: { media: string } }) {
+  return (
+    !messageDataHasMedia(messageData) ||
+    typeof messageData.media.media === 'string'
+  );
+}
+
 export type OldMessageInfoChatMessage = {
   hasMedia: boolean;
   chatId: number;
@@ -159,6 +179,19 @@ export type EditOrReplyResult = Awaited<
       | 'editMessageText'
       | 'sendMessage']
   >
+>;
+
+type DistributiveOmit<T, K extends string | number | symbol> = T extends unknown
+  ? Omit<T, K>
+  : never;
+
+export type MakeInlineResultReturn = DistributiveOmit<
+  | InlineQueryResultArticle
+  | InlineQueryResultCachedDocument
+  | InlineQueryResultCachedPhoto
+  | InlineQueryResultCachedVideo
+  | InlineQueryResultCachedGif,
+  'id' | 'title'
 >;
 
 export type EditOrReplyFlavor = {
