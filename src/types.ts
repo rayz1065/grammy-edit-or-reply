@@ -4,7 +4,7 @@ import {
   Audio,
   Document,
   InlineKeyboardButton,
-  InputMedia,
+  InputFile,
   LinkPreviewOptions,
   MessageEntity,
   ParseMode,
@@ -47,23 +47,6 @@ export type TelegramOther = {
   caption_entities?: MessageEntity[];
 };
 
-export type MessageDataMedia = {
-  text?: string;
-  media: Omit<InputMedia, 'caption' | 'caption_entities' | 'parse_mode'>;
-} & Other;
-
-export type MessageDataText = {
-  text: string;
-} & Other;
-
-export type MessageData = MessageDataMedia | MessageDataText;
-
-export function messageDataHasMedia(
-  messageData: MessageData
-): messageData is MessageDataMedia {
-  return 'media' in messageData && messageData.media !== undefined;
-}
-
 export type MessageMediaInfo =
   | {
       type: 'photo';
@@ -93,6 +76,26 @@ export type MessageMediaInfo =
     };
 
 export type MediaType = MessageMediaInfo['type'];
+
+export type MessageDataMedia = {
+  text?: string;
+  media: {
+    type: MediaType;
+    media: InputFile | string;
+  };
+} & Other;
+
+export type MessageDataText = {
+  text: string;
+} & Other;
+
+export type MessageData = MessageDataMedia | MessageDataText;
+
+export function messageDataHasMedia(
+  messageData: MessageData
+): messageData is MessageDataMedia {
+  return 'media' in messageData && messageData.media !== undefined;
+}
 
 export type OldMessageInfoChatMessage = {
   hasMedia: boolean;
@@ -159,5 +162,18 @@ export type EditOrReplyResult = Awaited<
 >;
 
 export type EditOrReplyFlavor = {
-  editOrReply: (messageData: MessageData) => Promise<EditOrReplyResult>;
+  /**
+   * Edits or sends a message to the current chat. The data of the current
+   * message is obtained through `getMessageInfo`. If the message is inaccessible
+   * or the update is a callback on an inline message it will make an
+   * optimistic guess that the edit will succeed (i.e. the old message has a
+   * media if the new one also does, same for the converse).
+   *
+   * You can pass the oldMessageInfo if you have it.
+   */
+  editOrReply: (
+    messageData: MessageData,
+    oldMessageInfo?: OldMessageInfo
+  ) => Promise<EditOrReplyResult>;
+  getMessageInfo: (guessedHasMedia?: boolean) => OldMessageInfo;
 };

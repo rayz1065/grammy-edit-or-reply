@@ -1,17 +1,11 @@
-import { Api, Context, Transformer } from 'grammy';
+import { Api, Transformer } from 'grammy';
 import {
   editOrReply,
-  editOrReplyMessage,
   makeInputMedia,
   makeOther,
   sendMedia,
 } from './edit-or-reply';
 import { InputMedia } from 'grammy/types';
-import {
-  generateCallback,
-  generateMe,
-  generateMessage,
-} from './test-utils/helpers.test';
 
 function getApi() {
   const api = new Api('12345:ABCDE');
@@ -51,7 +45,7 @@ test('should replace an existing message', async () => {
   const { api, apiCall } = getApi();
 
   // replace media with text
-  await editOrReplyMessage(
+  await editOrReply(
     api,
     { text: 'hello' },
     { chatId: 123, hasMedia: true, messageId: 456 }
@@ -63,7 +57,7 @@ test('should replace an existing message', async () => {
   apiCall.mockClear();
 
   // replace text with media
-  await editOrReplyMessage(
+  await editOrReply(
     api,
     { media: { media: 'abc', type: 'document' } },
     { chatId: 123, hasMedia: false, messageId: 456 }
@@ -78,7 +72,7 @@ test('should edit the message in a chat', async () => {
   const { api, apiCall } = getApi();
 
   // edit a media message
-  await editOrReplyMessage(
+  await editOrReply(
     api,
     { media: { media: 'abc', type: 'document' } },
     { chatId: 123, hasMedia: true, messageId: 456 }
@@ -88,7 +82,7 @@ test('should edit the message in a chat', async () => {
   apiCall.mockClear();
 
   // edit a text message
-  await editOrReplyMessage(
+  await editOrReply(
     api,
     { text: 'hello' },
     { chatId: 123, hasMedia: false, messageId: 456 }
@@ -101,7 +95,7 @@ test('should edit an inline message', async () => {
   const { api, apiCall } = getApi();
 
   // edit an inline media message
-  await editOrReplyMessage(
+  await editOrReply(
     api,
     { media: { media: 'abc', type: 'document' } },
     { hasMedia: true, inlineMessageId: '123' }
@@ -111,7 +105,7 @@ test('should edit an inline message', async () => {
   apiCall.mockClear();
 
   // edit an inline message text
-  await editOrReplyMessage(
+  await editOrReply(
     api,
     { text: 'hello' },
     { hasMedia: false, inlineMessageId: '123' }
@@ -121,7 +115,7 @@ test('should edit an inline message', async () => {
   apiCall.mockClear();
 
   // edit an inline media message, despite not having a new media
-  await editOrReplyMessage(
+  await editOrReply(
     api,
     { text: 'hello' },
     { hasMedia: true, inlineMessageId: '123' }
@@ -132,7 +126,7 @@ test('should edit an inline message', async () => {
 
   // fail to edit an inline text message, trying to add a media
   await expect(
-    editOrReplyMessage(
+    editOrReply(
       api,
       { media: { media: 'abc', type: 'document' } },
       { hasMedia: false, inlineMessageId: '123' }
@@ -144,13 +138,13 @@ test('should send a message to the chat', async () => {
   const { api, apiCall } = getApi();
 
   // text message
-  await editOrReplyMessage(api, { text: 'hello' }, { chatId: 123 });
+  await editOrReply(api, { text: 'hello' }, { chatId: 123 });
 
   expect(apiCall.mock.calls[0][1]).toBe('sendMessage');
   apiCall.mockClear();
 
   // media message
-  await editOrReplyMessage(
+  await editOrReply(
     api,
     { media: { media: 'abc', type: 'document' } },
     { chatId: 123 }
@@ -204,46 +198,4 @@ test('should generate input media properly', () => {
     type: 'video',
     has_spoiler: true,
   });
-});
-
-test('should edit or reply', async () => {
-  const { api, apiCall } = getApi();
-  const me = generateMe();
-  const ctx = new Context(
-    {
-      update_id: 12345,
-      callback_query: {
-        ...generateCallback(),
-        message: {
-          ...generateMessage(),
-          video: {
-            duration: 1,
-            file_id: '123',
-            file_unique_id: '123456',
-            height: 1,
-            width: 1,
-          },
-        },
-      },
-    },
-    api,
-    me
-  );
-
-  // reply
-  await editOrReply(ctx, {
-    text: 'hello',
-  });
-
-  expect(apiCall.mock.calls[0][1]).toBe('sendMessage');
-  expect(apiCall.mock.calls[1][1]).toBe('deleteMessage');
-  apiCall.mockClear();
-
-  // edit
-  await editOrReply(ctx, {
-    text: 'hello',
-    media: { media: '123', type: 'animation' },
-  });
-
-  expect(apiCall.mock.calls[0][1]).toBe('editMessageMedia');
 });

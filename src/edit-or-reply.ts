@@ -1,8 +1,7 @@
 import assert from 'assert';
-import { Api, Context } from 'grammy';
+import { Api } from 'grammy';
 import { InputMedia } from 'grammy/types';
 import {
-  EditOrReplyResult,
   MediaType,
   MessageData,
   MessageDataMedia,
@@ -14,7 +13,6 @@ import {
   oldMessageIsInline,
   oldMessageIsMessage,
 } from './types';
-import { getMessageInfo } from './message-info';
 
 /**
  * Creates the `other` parameter with the specified keys.
@@ -39,7 +37,7 @@ export function makeOther<T extends (keyof TelegramOther)[]>(
       key in keysMap ? keysMap[key as keyof typeof keysMap] : key
     ) as keyof MessageData;
 
-    if (remapped in messageData && messageData[remapped]) {
+    if (remapped in messageData) {
       if (remapped === 'keyboard') {
         other[key] = {
           inline_keyboard: messageData.keyboard,
@@ -166,7 +164,7 @@ export function deleteStaleMessage(
  * Use this when context is not available but you still have data regarding the
  * message that needs to be edited (if any).
  */
-export async function editOrReplyMessage(
+export async function editOrReply(
   api: Api,
   messageData: MessageData,
   oldMessageInfo: OldMessageInfo
@@ -293,23 +291,4 @@ export async function editOrReplyMessage(
     // send the media to the chat
     return await sendMedia(api, messageData, oldMessageInfo);
   }
-}
-
-/**
- * Edits or sends a message to the current chat. The data of the current
- * message is obtained through `getMessageInfo`, if the message is inaccessible
- * or the update is a callback on an inline message it will assume the original
- * message has a media if and only if the new message has a media.
- *
- * If you have the data of the old message use `editOrReplyMessage` directly.
- */
-export async function editOrReply<C extends Context>(
-  ctx: C,
-  messageData: MessageData
-): Promise<EditOrReplyResult> {
-  return await editOrReplyMessage(
-    ctx.api,
-    messageData,
-    getMessageInfo(ctx, messageDataHasMedia(messageData))
-  );
 }
