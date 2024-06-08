@@ -49,6 +49,7 @@ bot.callbackQuery(/count_(\d+)/, async (ctx) => {
 });
 ```
 
+> [!TIP]
 > 👇 See [below](#complete-example) for a complete example using different types of media working across commands, callback queries, and inline queries, including the generation of `InlineQueryResult`s.
 
 When editing from a text message to one containing media, the previous message will be deleted and the new one with the media will be sent.
@@ -65,6 +66,7 @@ npm install grammy-edit-or-reply
 yarn add grammy-edit-or-reply
 ```
 
+> [!WARNING]
 > ⚙️ Instead of using semver, grammy-edit-or-reply uses the same major and minor as the latest supported grammy version.
 
 You can then add the middleware as follows:
