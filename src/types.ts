@@ -164,22 +164,30 @@ export function oldMessageIsChat(
   );
 }
 
-export type EditOrReplyResult = Awaited<
+export type SendMediaResult = Awaited<
   ReturnType<
     Api[
       | 'sendPhoto'
       | 'sendAnimation'
       | 'sendAudio'
       | 'sendDocument'
-      | 'sendVideo'
-      | 'editMessageMediaInline'
-      | 'editMessageCaptionInline'
-      | 'editMessageTextInline'
-      | 'editMessageMedia'
-      | 'editMessageText'
-      | 'sendMessage']
+      | 'sendVideo']
   >
 >;
+
+export type EditOrReplyResult =
+  | SendMediaResult
+  | Awaited<
+      ReturnType<
+        Api[
+          | 'editMessageMediaInline'
+          | 'editMessageCaptionInline'
+          | 'editMessageTextInline'
+          | 'editMessageMedia'
+          | 'editMessageText'
+          | 'sendMessage']
+      >
+    >;
 
 type DistributiveOmit<T, K extends string | number | symbol> = T extends unknown
   ? Omit<T, K>

@@ -2,12 +2,14 @@ import assert from 'assert';
 import { Api } from 'grammy';
 import { InputMedia } from 'grammy/types';
 import {
+  EditOrReplyResult,
   MediaType,
   MessageData,
   MessageDataMedia,
   OldMessageInfo,
   OldMessageInfoChat,
   OldMessageInfoChatMessage,
+  SendMediaResult,
   TelegramOther,
   messageDataHasMedia,
   oldMessageIsInline,
@@ -82,7 +84,7 @@ export async function sendMedia(
   api: Api,
   messageData: MessageDataMedia,
   oldMessageInfo: OldMessageInfoChat | OldMessageInfoChatMessage
-) {
+): Promise<SendMediaResult> {
   const { chatId } = oldMessageInfo;
   const {
     media: { media, type: mediaType },
@@ -168,7 +170,7 @@ export async function editOrReply(
   api: Api,
   messageData: MessageData,
   oldMessageInfo: OldMessageInfo
-) {
+): Promise<EditOrReplyResult> {
   if (oldMessageIsInline(oldMessageInfo)) {
     const { inlineMessageId, hasMedia } = oldMessageInfo;
 
