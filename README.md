@@ -18,39 +18,55 @@ It can seamlessly edit to and from:
 - 🎵 Audio
 
 ```typescript
-async function replyWithCounter(ctx: MyContext, count: number) {
-  return await ctx.editOrReply({
-    text: `Hello world!\nCount: ${count}`,
-    keyboard: [
-      [
-        {
-          text: '+1',
-          callback_data: `count_${count + 1}`,
-        },
-      ],
-    ],
-    parse_mode: 'HTML',
-    link_preview_options: {
-      url: 'https://t.me/checklibot',
-      prefer_small_media: true,
-      show_above_text: true,
-    },
-    // reply_parameters will be ignored when irrelevant!
-    reply_parameters: ctx.msgId ? { message_id: ctx.msgId } : undefined,
-  });
+function makeMediaGallery(selectedIdx?: number) {
+  const keyboard: InlineKeyboardButton[][] = [
+    myMedias.map((x, i) => ({
+      text: prettyMediaTypes[x.type],
+      callback_data: `media_${i}`,
+    })),
+  ];
+
+  const media =
+    selectedIdx !== undefined ? myMedias.at(selectedIdx) : undefined;
+  if (media) {
+    return {
+      text: `Media id: <code>${media.media}</code>`,
+      parse_mode: 'HTML',
+      media,
+      keyboard,
+    } satisfies MessageDataMedia;
+  }
+
+  return {
+    text: 'Pick the media from the options',
+    keyboard,
+  } satisfies MessageData;
 }
 
-bot.command('start', async (ctx) => {
-  await replyWithCounter(ctx, 0);
+// generate inlineQueryResults based on the message data
+bot.inlineQuery(/.*/, async (ctx) => {
+  const results = myMedias.map((x, i) => ({
+    ...makeInlineResult(makeMediaGallery(i)),
+    id: `media-${i}`,
+    title: `Send ${x.type} ${prettyMediaTypes[x.type]}`,
+  }));
+  await ctx.answerInlineQuery(results);
 });
 
-bot.callbackQuery(/count_(\d+)/, async (ctx) => {
-  await replyWithCounter(ctx, Number(ctx.match[1]));
+// handle the command
+bot.command('start', async (ctx) => {
+  await ctx.editOrReply(makeMediaGallery());
+});
+
+// and also the callback query (including in inline mode)
+bot.callbackQuery(/media_(\d+)/, async (ctx) => {
+  const selectedIdx = Number(ctx.match[1]);
+  await ctx.editOrReply(makeMediaGallery(selectedIdx));
 });
 ```
 
 > [!TIP]
-> 👇 See [below](#complete-example) for a complete example using different types of media working across commands, callback queries, and inline queries, including the generation of `InlineQueryResult`s.
+> You can run this example yourself, the complete code is present in `examples/gallery.ts`, simply run `$ deno run --allow-net examples/gallery.ts` after building with `$ npm run build`.
 
 When editing from a text message to one containing media, the previous message will be deleted and the new one with the media will be sent.
 The same behavior also happens when replacing a message containing media with one without media.
@@ -65,9 +81,6 @@ npm install grammy-edit-or-reply
 # or
 yarn add grammy-edit-or-reply
 ```
-
-> [!WARNING]
-> ⚙️ Instead of using semver, grammy-edit-or-reply uses the same major and minor as the latest supported grammy version.
 
 You can then add the middleware as follows:
 
@@ -135,12 +148,10 @@ bot.command('start', async (ctx) => {
 
 ## Generating Inline Query Results
 
-This plugin can also help you generate inline query results out of your messages through the `makeInlineResult` function.
-
-Caveats:
+This plugin can also help you generate inline query results out of your messages through the `makeInlineResult` function, with a few caveats:
 
 - `InputFile`s are not supported in `sendInlineQuery`, the type of media must therefore be narrowed down in case it's too broad using `messageDataHasNoInputFile`.
-- Permitting URLs as media would require adding a lot of extra metadata (like thumbnails and mime types), to keep message definition simple **only file ids are allowed**;
+- Permitting URLs as media would require adding a lot of extra metadata (like thumbnails and mime types). In order to keep message definition simple **only file ids are allowed**;
 - sending an audio by file id can [run into issues with metadata](https://github.com/telegraf/telegraf/issues/884#issuecomment-582278542), even though the file is already stored on Telegram's server. Audios are therefore sent as documents, changing the appearance of the inline result, but not that of the sent message.
 
 ```typescript
@@ -165,78 +176,6 @@ Under the hood `editOrReply` uses a function called `getMessageInfo` to determin
 
 `OldMessageInfoChatMessage` and `OldMessageInfoInline` further specify whether the previous message has a media by using `getMessageMediaInfo` on the message, if the message is not available (inline mode or inaccessible message) a guess will be made.
 Call `ctx.getMessageInfo` directly if you want more control over the guess and pass the result to `ctx.editOrReply`.
-
-## Complete Example
-
-```typescript
-const myMedias: MessageDataMedia['media'][] = [
-  // your medias here
-];
-
-const prettyMediaTypes = {
-  photo: '🖼️',
-  animation: '🎞️',
-  video: '📹',
-  document: '📄',
-  audio: '🎵',
-};
-
-function makeMediaGallery(selectedIdx?: number) {
-  const media =
-    selectedIdx !== undefined ? myMedias.at(selectedIdx) : undefined;
-
-  const keyboard: InlineKeyboardButton[][] = [
-    myMedias.map((x, i) => ({
-      text: prettyMediaTypes[x.type],
-      callback_data: `media_${i}`,
-    })),
-  ];
-
-  if (media) {
-    return {
-      text: `Media id: <code>${media.media}</code>`,
-      parse_mode: 'HTML',
-      media,
-      keyboard,
-    } satisfies MessageDataMedia;
-  }
-
-  return {
-    text: 'Pick the media from the options',
-    keyboard,
-  } satisfies MessageData;
-}
-
-// generate inlineQueryResults based on the message data
-bot.inlineQuery('gallery', async (ctx) => {
-  const results = myMedias.map((x, i) => ({
-    ...makeInlineResult(makeMediaGallery(i)),
-    id: `media-${i}`,
-    title: `Send ${x.type} ${prettyMediaTypes[x.type]}`,
-  }));
-  await ctx.answerInlineQuery(results);
-});
-
-bot.command('gallery', async (ctx) => {
-  await ctx.editOrReply(makeMediaGallery());
-});
-
-bot.callbackQuery(/media_(\d+)/, async (ctx) => {
-  const selectedIdx = Number(ctx.match[1]);
-  await ctx.editOrReply(makeMediaGallery(selectedIdx));
-});
-
-// use this to get the file IDs
-bot.use(async (ctx, next) => {
-  if (ctx.message) {
-    const res = getMessageMediaInfo(ctx.message);
-    if (res) {
-      console.log('media info', res);
-    }
-  }
-  await next();
-});
-```
 
 ## License
 

@@ -1,3 +1,4 @@
+// @denoify-ignore
 import { Api, Transformer } from 'grammy';
 import {
   editOrReply,

@@ -1,3 +1,4 @@
+// @denoify-ignore
 import { InaccessibleMessage, Message, Update } from 'grammy/types';
 import { getMessageInfo, getMessageMediaInfo } from './message-info';
 import { Context } from 'grammy';

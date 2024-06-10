@@ -1,3 +1,4 @@
+// @denoify-ignore
 import { makeInlineResult } from './inline-results';
 
 test('should create the inline result correctly', () => {

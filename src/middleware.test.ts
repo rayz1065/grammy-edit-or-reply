@@ -1,3 +1,4 @@
+// @denoify-ignore
 import { Context } from 'grammy';
 import {
   generateCallback,
