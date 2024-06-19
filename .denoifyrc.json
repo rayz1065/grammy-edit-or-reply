@@ -1,6 +1,6 @@
 {
   "out": "deno_out/",
   "ports": {
-    "grammy": "https://deno.land/x/grammy@v1.24.0/mod.ts"
+    "grammy": "https://deno.land/x/grammy@v1.25.0/mod.ts"
   }
 }
