@@ -1,4 +1,4 @@
-import { Bot, Context } from 'https://deno.land/x/grammy@v1.24.0/mod.ts';
+import { Bot, Context } from 'https://deno.land/x/grammy@v1.25.0/mod.ts';
 import { InlineKeyboardButton } from 'https://deno.land/x/grammy_types@v3.8.0/markup.ts';
 import {
   editOrReplyMiddleware,

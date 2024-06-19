@@ -186,13 +186,14 @@ export async function editOrReply(
       return await api.editMessageMediaInline(
         inlineMessageId,
         makeInputMedia(messageData),
-        makeOther(messageData, ['reply_markup'])
+        makeOther(messageData, ['business_connection_id', 'reply_markup'])
       );
     } else if (hasMedia) {
       // we can't remove the media, but we can still try changing the caption
       return await api.editMessageCaptionInline(
         inlineMessageId,
         makeOther(messageData, [
+          'business_connection_id',
           'reply_markup',
           'parse_mode',
           'caption',
@@ -206,6 +207,7 @@ export async function editOrReply(
         inlineMessageId,
         messageData.text,
         makeOther(messageData, [
+          'business_connection_id',
           'entities',
           'link_preview_options',
           'reply_markup',
@@ -224,7 +226,7 @@ export async function editOrReply(
         chatId,
         messageId,
         makeInputMedia(messageData),
-        makeOther(messageData, ['reply_markup'])
+        makeOther(messageData, ['business_connection_id', 'reply_markup'])
       );
     } else if (hasMedia) {
       // delete the existing message, send a new one without media
@@ -260,6 +262,7 @@ export async function editOrReply(
         messageId,
         text,
         makeOther(messageData, [
+          'business_connection_id',
           'entities',
           'link_preview_options',
           'parse_mode',

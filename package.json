@@ -1,7 +1,7 @@
 {
   "name": "grammy-edit-or-reply",
   "description": "Exports utilities for grammy to edit a message or reply to a message based on the context",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "rayz1065",
   "license": "MIT",
   "engines": {
@@ -21,7 +21,7 @@
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "grammy": "^1.24.0"
+    "grammy": "^1.25.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
