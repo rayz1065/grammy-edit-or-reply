@@ -31,6 +31,7 @@ export type Other = {
   reply_parameters?: ReplyParameters;
   message_effect_id?: string;
   show_caption_above_media?: boolean;
+  allow_paid_broadcast?: boolean;
 };
 
 export type TelegramOther = {
@@ -46,6 +47,7 @@ export type TelegramOther = {
   reply_parameters?: ReplyParameters;
   message_effect_id?: string;
   show_caption_above_media?: boolean;
+  allow_paid_broadcast?: boolean;
 
   // caption
   caption?: string;
@@ -146,7 +148,7 @@ export function oldMessageIsInline(
   );
 }
 
-export function oldMessageIsMessage(
+export function oldMessageIsChatMessage(
   oldMessageInfo: OldMessageInfo
 ): oldMessageInfo is OldMessageInfoChatMessage {
   return (
@@ -160,7 +162,7 @@ export function oldMessageIsChat(
   return (
     'chatId' in oldMessageInfo &&
     oldMessageInfo.chatId !== undefined &&
-    !oldMessageIsMessage(oldMessageInfo)
+    !oldMessageIsChatMessage(oldMessageInfo)
   );
 }
 

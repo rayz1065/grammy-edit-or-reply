@@ -64,9 +64,7 @@ test('should replace an existing message', async () => {
     { chatId: 123, hasMedia: false, messageId: 456 }
   );
 
-  expect(apiCall.mock.calls[0][1]).toBe('sendDocument');
-  expect(apiCall.mock.calls[1][1]).toBe('deleteMessage');
-  expect(apiCall.mock.calls[1][2]).toEqual({ chat_id: 123, message_id: 456 });
+  expect(apiCall.mock.calls[0][1]).toBe('editMessageMedia');
 });
 
 test('should edit the message in a chat', async () => {
@@ -126,13 +124,13 @@ test('should edit an inline message', async () => {
   apiCall.mockClear();
 
   // fail to edit an inline text message, trying to add a media
-  await expect(
-    editOrReply(
-      api,
-      { media: { media: 'abc', type: 'document' } },
-      { hasMedia: false, inlineMessageId: '123' }
-    )
-  ).rejects.toThrow();
+  await editOrReply(
+    api,
+    { text: 'hello', media: { media: 'abc', type: 'document' } },
+    { hasMedia: false, inlineMessageId: '123' }
+  );
+
+  expect(apiCall.mock.calls[0][1]).toBe('editMessageMedia');
 });
 
 test('should send a message to the chat', async () => {

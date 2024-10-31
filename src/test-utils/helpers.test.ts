@@ -29,6 +29,8 @@ export function generateMe(): UserFromGetMe {
     username: 'test',
     first_name: 'Test',
     is_bot: true,
+    can_connect_to_business: false,
+    has_main_web_app: false,
   };
 }
 

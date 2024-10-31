@@ -13,7 +13,7 @@ import {
   TelegramOther,
   messageDataHasMedia,
   oldMessageIsInline,
-  oldMessageIsMessage,
+  oldMessageIsChatMessage,
 } from './types';
 
 /**
@@ -101,6 +101,7 @@ export async function sendMedia(
     'parse_mode',
     'caption',
     'caption_entities',
+    'allow_paid_broadcast',
   ] as const satisfies (keyof TelegramOther)[];
 
   if (mediaType === 'photo') {
@@ -174,15 +175,9 @@ export async function editOrReply(
   if (oldMessageIsInline(oldMessageInfo)) {
     const { inlineMessageId, hasMedia } = oldMessageInfo;
 
-    if (!hasMedia && messageDataHasMedia(messageData)) {
-      throw Error(
-        'Original inline message had no media, ' +
-          'but trying to add a media while editing'
-      );
-    }
-
-    if (hasMedia && messageDataHasMedia(messageData)) {
-      // we can edit the media as well
+    if (messageDataHasMedia(messageData)) {
+      // we can edit the media, if a media wasn't originally present this will
+      // add one
       return await api.editMessageMediaInline(
         inlineMessageId,
         makeInputMedia(messageData),
@@ -217,11 +212,12 @@ export async function editOrReply(
     }
   }
 
-  if (oldMessageIsMessage(oldMessageInfo)) {
+  if (oldMessageIsChatMessage(oldMessageInfo)) {
     const { chatId, hasMedia, messageId } = oldMessageInfo;
 
-    if (hasMedia && messageDataHasMedia(messageData)) {
-      // we can edit the media as well
+    if (messageDataHasMedia(messageData)) {
+      // we can edit the media, if a media wasn't originally present this will
+      // add one
       return await api.editMessageMedia(
         chatId,
         messageId,
@@ -244,13 +240,9 @@ export async function editOrReply(
           'reply_markup',
           'reply_parameters',
           'message_effect_id',
+          'allow_paid_broadcast',
         ])
       );
-      deleteStaleMessage(api, oldMessageInfo);
-      return result;
-    } else if (messageDataHasMedia(messageData)) {
-      // send the media to the chat
-      const result = await sendMedia(api, messageData, oldMessageInfo);
       deleteStaleMessage(api, oldMessageInfo);
       return result;
     } else {
@@ -290,6 +282,7 @@ export async function editOrReply(
         'reply_markup',
         'reply_parameters',
         'message_effect_id',
+        'allow_paid_broadcast',
       ])
     );
   } else {
